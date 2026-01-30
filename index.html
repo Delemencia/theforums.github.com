@@ -1,62 +1,88 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Da forums!</title>
+<title>teh faramz!</title>
 <style>
-  body { background-color: #222; color: #ccc; font-family: Verdana, Arial, Helvetica, sans-serif; margin: 0; padding: 10px; }
-  .header { background: #333; border: 1px solid #444; padding: 10px; margin-bottom: 10px; }
-  .header h1 { color: #fff; margin: 0; font-size: 24px; text-shadow: 1px 1px #000; }
-  .warning { color: #ff4444; font-size: 12px; font-weight: bold; margin-top: 5px; }
-  .chat-container { background: #333; border: 1px solid #444; height: 400px; overflow-y: scroll; padding: 10px; display: flex; flex-direction: column; gap: 5px; }
-  .message { background: #3a3a3a; border-left: 3px solid #666; padding: 8px; font-size: 13px; line-height: 1.4; }
-  .message b { color: #fff; font-size: 12px; display: block; margin-bottom: 2px; }
-  .controls { background: #333; border: 1px solid #444; padding: 10px; margin-top: 10px; display: flex; gap: 5px; }
-  input[type="text"] { background: #111; border: 1px solid #555; color: #fff; padding: 8px; flex-grow: 1; font-family: inherit; }
-  button { background: #555; border: 1px solid #777; color: #fff; padding: 8px 15px; cursor: pointer; font-weight: bold; }
-  button:hover { background: #666; }
-  .user-input { width: 100px; }
+  body { background-color: #f2f2f2; color: #333; font-family: Verdana, Arial, sans-serif; margin: 0; padding: 0; }
+  .header-bar { background: #333; height: 40px; width: 100%; display: flex; align-items: center; padding-left: 15px; }
+  .logo { color: white; font-weight: bold; font-size: 18px; letter-spacing: -1px; }
+  .forum-container { width: 900px; margin: 20px auto; background: white; border: 1px solid #ccc; min-height: 500px; }
+  .forum-header { background: #e1e1e1; padding: 10px; border-bottom: 1px solid #ccc; }
+  .forum-header h1 { margin: 0; font-size: 16px; color: #444; }
+  .warning-strip { background: #ffdfdf; border: 1px solid #ff0000; color: #ff0000; padding: 5px; margin: 10px; font-size: 11px; font-weight: bold; text-align: center; }
+  .chat-area { height: 450px; overflow-y: scroll; padding: 0; }
+  .post { border-bottom: 1px solid #eee; display: flex; min-height: 80px; }
+  .post-user { width: 150px; background: #f9f9f9; border-right: 1px solid #eee; padding: 10px; font-size: 11px; font-weight: bold; color: #006699; overflow: hidden; }
+  .post-content { padding: 10px; font-size: 12px; flex-grow: 1; color: #333; }
+  .footer-input { background: #e1e1e1; padding: 15px; border-top: 1px solid #ccc; display: flex; gap: 10px; }
+  input[type="text"] { border: 1px solid #a7a7a7; padding: 5px; flex-grow: 1; font-size: 12px; }
+  button { background: #f2f2f2; border: 1px solid #a7a7a7; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+  button:hover { background: #fff; }
+  .my-id-display { font-size: 10px; color: #666; padding: 5px 10px; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <h1>Da forums!</h1>
-  <div class="warning">REPORT BUGS AND HACKS! KEEP LE FORUMS SAFE!</div>
+<div class="header-bar">
+  <div class="logo">ROBLOX</div>
 </div>
 
-<div class="chat-container" id="chat"></div>
+<div class="forum-container">
+  <div class="forum-header">
+    <h1>Da forums! - report bugs and hacks!</h1>
+  </div>
+  
+  <div class="warning-strip">
+    SYSTEM: REPORT ALL BUGS AND HACKS IMMEDIATELY. KEEP DA FORUMS SAFE.
+  </div>
 
-<div class="controls">
-  <input type="text" id="user" class="user-input" placeholder="Username" maxlength="15">
-  <input type="text" id="msg" placeholder="Write a message..." onkeydown="if(event.key==='Enter') send()">
-  <button onclick="send()">Post</button>
+  <div class="my-id-display" id="displayId"></div>
+  
+  <div class="chat-area" id="chat"></div>
+
+  <div class="footer-input">
+    <input type="text" id="msg" placeholder="Type your message here..." maxlength="200" onkeydown="if(event.key==='Enter') send()">
+    <button onclick="send()">Post</button>
+  </div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <script>
+  const myUsername = "DELEMENCIA_" + Math.floor(Math.random() * 1000000);
+  document.getElementById('displayId').innerText = "Logged in as: " + myUsername;
+
   const config = { databaseURL: "https://da-forums-default-rtdb.firebaseio.com/" };
   firebase.initializeApp(config);
   const db = firebase.database().ref("messages");
 
   function send() {
-    const user = document.getElementById('user').value || "Guest";
-    const msg = document.getElementById('msg').value;
-    if (msg.trim() === "") return;
-    db.push({ user: user, text: msg, time: Date.now() });
-    document.getElementById('msg').value = "";
+    const msgInput = document.getElementById('msg');
+    const msgText = msgInput.value;
+    if (msgText.trim() === "") return;
+    
+    db.push({
+      user: myUsername,
+      text: msgText,
+      timestamp: Date.now()
+    });
+    
+    msgInput.value = "";
   }
 
-  db.limitToLast(50).on("value", (snap) => {
+  db.limitToLast(30).on("value", (snap) => {
     const container = document.getElementById('chat');
     container.innerHTML = "";
     snap.forEach((child) => {
       const data = child.val();
-      const div = document.createElement('div');
-      div.className = "message";
-      div.innerHTML = `<b>${data.user}</b>${data.text}`;
-      container.appendChild(div);
+      const postDiv = document.createElement('div');
+      postDiv.className = "post";
+      postDiv.innerHTML = `
+        <div class="post-user">${data.user}</div>
+        <div class="post-content">${data.text}</div>
+      `;
+      container.appendChild(postDiv);
     });
     container.scrollTop = container.scrollHeight;
   });
