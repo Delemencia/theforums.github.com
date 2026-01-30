@@ -1,30 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>teh faramz!</title>
+<title>Da forums!</title>
 <style>
   body { background-color: #f2f2f2; color: #333; font-family: Verdana, Arial, sans-serif; margin: 0; padding: 0; }
   .header-bar { background: #333; height: 40px; width: 100%; display: flex; align-items: center; padding-left: 15px; }
   .logo { color: white; font-weight: bold; font-size: 18px; letter-spacing: -1px; }
-  .forum-container { width: 900px; margin: 20px auto; background: white; border: 1px solid #ccc; min-height: 500px; }
+  .forum-container { width: 900px; margin: 20px auto; background: white; border: 1px solid #ccc; min-height: 500px; box-shadow: 0 0 5px rgba(0,0,0,0.1); }
   .forum-header { background: #e1e1e1; padding: 10px; border-bottom: 1px solid #ccc; }
   .forum-header h1 { margin: 0; font-size: 16px; color: #444; }
   .warning-strip { background: #ffdfdf; border: 1px solid #ff0000; color: #ff0000; padding: 5px; margin: 10px; font-size: 11px; font-weight: bold; text-align: center; }
-  .chat-area { height: 450px; overflow-y: scroll; padding: 0; }
-  .post { border-bottom: 1px solid #eee; display: flex; min-height: 80px; }
-  .post-user { width: 150px; background: #f9f9f9; border-right: 1px solid #eee; padding: 10px; font-size: 11px; font-weight: bold; color: #006699; overflow: hidden; }
-  .post-content { padding: 10px; font-size: 12px; flex-grow: 1; color: #333; }
-  .footer-input { background: #e1e1e1; padding: 15px; border-top: 1px solid #ccc; display: flex; gap: 10px; }
-  input[type="text"] { border: 1px solid #a7a7a7; padding: 5px; flex-grow: 1; font-size: 12px; }
-  button { background: #f2f2f2; border: 1px solid #a7a7a7; padding: 4px 12px; font-size: 12px; cursor: pointer; }
+  .chat-area { height: 400px; overflow-y: scroll; border-bottom: 1px solid #ccc; background: #fff; }
+  .post { border-bottom: 1px solid #eee; display: flex; min-height: 100px; width: 100%; }
+  .post-user { width: 150px; background: #f9f9f9; border-right: 1px solid #eee; padding: 10px; font-size: 11px; font-weight: bold; color: #006699; overflow-wrap: break-word; }
+  .post-content { padding: 15px; font-size: 13px; flex-grow: 1; color: #333; line-height: 1.4; white-space: pre-wrap; }
+  .footer-input { background: #e1e1e1; padding: 15px; display: flex; gap: 10px; align-items: center; }
+  input[type="text"] { border: 1px solid #a7a7a7; padding: 8px; flex-grow: 1; font-size: 13px; outline: none; }
+  button { background: #f2f2f2; border: 1px solid #a7a7a7; padding: 6px 15px; font-size: 12px; cursor: pointer; font-weight: bold; }
   button:hover { background: #fff; }
-  .my-id-display { font-size: 10px; color: #666; padding: 5px 10px; }
+  .id-badge { font-size: 10px; color: #777; padding: 5px 10px; background: #f9f9f9; border-bottom: 1px solid #eee; }
 </style>
 </head>
 <body>
 
 <div class="header-bar">
-  <div class="logo">Delemencia</div>
+  <div class="logo">delemencia!</div>
 </div>
 
 <div class="forum-container">
@@ -36,12 +36,12 @@
     SYSTEM: REPORT ALL BUGS AND HACKS IMMEDIATELY. KEEP DA FORUMS SAFE.
   </div>
 
-  <div class="my-id-display" id="displayId"></div>
+  <div class="id-badge" id="displayId">Connecting...</div>
   
   <div class="chat-area" id="chat"></div>
 
   <div class="footer-input">
-    <input type="text" id="msg" placeholder="Type your message here..." maxlength="200" onkeydown="if(event.key==='Enter') send()">
+    <input type="text" id="msg" placeholder="Write your post here..." maxlength="300" onkeydown="if(event.key==='Enter') send()">
     <button onclick="send()">Post</button>
   </div>
 </div>
@@ -53,38 +53,41 @@
   const myUsername = "DELEMENCIA_" + Math.floor(Math.random() * 1000000);
   document.getElementById('displayId').innerText = "Logged in as: " + myUsername;
 
-  const config = { databaseURL: "https://da-forums-default-rtdb.firebaseio.com/" };
+  const config = {
+    databaseURL: "https://da-forums-default-rtdb.firebaseio.com/"
+  };
+  
   firebase.initializeApp(config);
-  const db = firebase.database().ref("messages");
+  const db = firebase.database().ref("posts");
 
   function send() {
-    const msgInput = document.getElementById('msg');
-    const msgText = msgInput.value;
-    if (msgText.trim() === "") return;
-    
+    const input = document.getElementById('msg');
+    const text = input.value.trim();
+    if (text === "") return;
+
     db.push({
       user: myUsername,
-      text: msgText,
+      message: text,
       timestamp: Date.now()
     });
-    
-    msgInput.value = "";
+
+    input.value = "";
   }
 
-  db.limitToLast(30).on("value", (snap) => {
-    const container = document.getElementById('chat');
-    container.innerHTML = "";
-    snap.forEach((child) => {
+  db.limitToLast(20).on("value", (snapshot) => {
+    const chat = document.getElementById('chat');
+    chat.innerHTML = "";
+    snapshot.forEach((child) => {
       const data = child.val();
-      const postDiv = document.createElement('div');
-      postDiv.className = "post";
-      postDiv.innerHTML = `
+      const post = document.createElement('div');
+      post.className = "post";
+      post.innerHTML = `
         <div class="post-user">${data.user}</div>
-        <div class="post-content">${data.text}</div>
+        <div class="post-content">${data.message}</div>
       `;
-      container.appendChild(postDiv);
+      chat.appendChild(post);
     });
-    container.scrollTop = container.scrollHeight;
+    chat.scrollTop = chat.scrollHeight;
   });
 </script>
 
