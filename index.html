@@ -1,23 +1,24 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Da Dorums... LOL!</title>
+<title>Da FORUMSSS!</title>
 <style>
   body { background-color: #f2f2f2; color: #333; font-family: Verdana, sans-serif; margin: 0; padding: 0; }
   .header-bar { background: #333; height: 40px; width: 100%; display: flex; align-items: center; padding-left: 15px; border-bottom: 2px solid #000; }
   .logo { color: white; font-weight: bold; font-size: 18px; }
-  .forum-container { width: 95%; max-width: 900px; margin: 10px auto; background: white; border: 1px solid #ccc; }
-  .forum-header { background: #e1e1e1; padding: 10px; border-bottom: 1px solid #ccc; font-weight: bold; font-size: 14px; color: #444; }
-  .warning-strip { background: #ffdfdf; border: 1px solid #ff0000; color: #ff0000; padding: 5px; margin: 10px; font-size: 11px; text-align: center; font-weight: bold; }
-  .chat-area { height: 450px; overflow-y: scroll; background: #fff; border-bottom: 1px solid #ccc; }
-  .post { border-bottom: 1px solid #eee; display: flex; min-height: 80px; width: 100%; }
+  .forum-container { width: 95%; max-width: 900px; margin: 10px auto; background: white; border: 1px solid #ccc; box-shadow: 0px 0px 4px #ccc; }
+  .forum-header { background: #e1e1e1; padding: 10px; border-bottom: 1px solid #ccc; font-weight: bold; font-size: 13px; color: #444; }
+  .warning-strip { background: #ffdfdf; border: 1px solid #ff0000; color: #ff0000; padding: 5px; margin: 10px; font-size: 11px; text-align: center; font-weight: bold; border-radius: 3px; }
+  .chat-area { height: 450px; overflow-y: scroll; background: #fff; border-bottom: 1px solid #ccc; display: flex; flex-direction: column; }
+  .post { border-bottom: 1px solid #eee; display: flex; min-height: 80px; width: 100%; animation: fadeIn 0.2s; }
   .post-user { width: 140px; background: #f9f9f9; border-right: 1px solid #ccc; padding: 10px; font-size: 11px; font-weight: bold; color: #006699; overflow-wrap: break-word; }
   .post-content { padding: 12px; font-size: 12px; flex-grow: 1; color: #333; line-height: 1.4; white-space: pre-wrap; }
   .footer-input { background: #e1e1e1; padding: 15px; display: flex; gap: 8px; }
-  input[type="text"] { border: 1px solid #a7a7a7; padding: 8px; flex-grow: 1; font-family: Verdana, sans-serif; font-size: 13px; }
+  input[type="text"] { border: 1px solid #a7a7a7; padding: 8px; flex-grow: 1; font-family: Verdana, sans-serif; font-size: 13px; outline: none; }
   button { background: #f2f2f2; border: 1px solid #a7a7a7; padding: 6px 15px; cursor: pointer; font-size: 12px; font-weight: bold; }
   button:hover { background: #fff; }
-  .my-id { font-size: 10px; color: #777; padding: 5px 10px; background: #f9f9f9; border-bottom: 1px solid #eee; }
+  .my-id { font-size: 10px; color: #777; padding: 5px 10px; background: #f9f9f9; border-bottom: 1px solid #eee; border-top: 1px solid #ccc; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 </style>
 </head>
 <body>
@@ -28,10 +29,10 @@
 
 <div class="forum-container">
   <div class="forum-header">Da forums! - report bugs and hacks!</div>
-  <div class="warning-strip">SYSTEM: DO NOT SHARE PASSWORDS. REPORT HACKS!</div>
-  <div class="my-id" id="displayId">Generating ID...</div>
+  <div class="warning-strip">SYSTEM: DO NOT SHARE PASSWORDS... PLEASE! REPORT HACKS!</div>
   
   <div class="chat-area" id="chat"></div>
+  <div class="my-id" id="displayId">Connecting...</div>
 
   <div class="footer-input">
     <input type="text" id="msg" placeholder="Write your post here..." maxlength="250" onkeydown="if(event.key==='Enter') send()">
@@ -50,6 +51,15 @@
   firebase.initializeApp(config);
   const db = firebase.database().ref("posts");
 
+  function addPostToUI(user, message) {
+    const chat = document.getElementById('chat');
+    const post = document.createElement('div');
+    post.className = "post";
+    post.innerHTML = `<div class="post-user">${user}</div><div class="post-content">${message}</div>`;
+    chat.appendChild(post);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
   function send() {
     const input = document.getElementById('msg');
     const text = input.value.trim();
@@ -61,20 +71,24 @@
       timestamp: Date.now()
     });
 
+    addPostToUI(myUsername, text);
     input.value = "";
   }
 
-  db.limitToLast(25).on("value", (snapshot) => {
+  db.limitToLast(30).on("child_added", (snapshot) => {
+    const data = snapshot.val();
+    if (data.user !== myUsername) {
+      addPostToUI(data.user, data.message);
+    }
+  });
+
+  db.limitToLast(30).once("value", (snapshot) => {
     const chat = document.getElementById('chat');
     chat.innerHTML = "";
     snapshot.forEach((child) => {
       const data = child.val();
-      const post = document.createElement('div');
-      post.className = "post";
-      post.innerHTML = `<div class="post-user">${data.user}</div><div class="post-content">${data.message}</div>`;
-      chat.appendChild(post);
+      addPostToUI(data.user, data.message);
     });
-    chat.scrollTop = chat.scrollHeight;
   });
 </script>
 
